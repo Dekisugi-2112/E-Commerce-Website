@@ -39,3 +39,6 @@ backend/.venv/
 backend/venv/
 backend/env/
 backend/.env
+
+# Local design resources
+tài liệu thiết kế/
