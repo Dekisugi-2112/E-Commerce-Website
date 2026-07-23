@@ -6,7 +6,8 @@ from fastapi import APIRouter, HTTPException, Depends, Header
 from typing import Optional
 from app.core.config import settings
 from app.core.supabase import get_supabase_client
-from app.schemas.auth import RegisterRequest, LoginRequest, AuthResponse, UserProfileResponse
+import random
+from app.schemas.auth import RegisterRequest, LoginRequest, AuthResponse, UserProfileResponse, ForgotPasswordRequest, ResetPasswordRequest
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -221,3 +222,81 @@ def update_profile(req: ProfileUpdateRequest, authorization: Optional[str] = Hea
         )
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Lỗi cập nhật hồ sơ: {str(e)}")
+
+reset_codes = {} # key: email (lowercase), value: {"code": code, "expires_at": timestamp}
+
+@router.post("/forgot-password")
+def forgot_password(req: ForgotPasswordRequest):
+    """
+    Gửi mã xác thực khôi phục mật khẩu qua Email (Mô phỏng bằng cách in ra console và trả về trong response)
+    """
+    supabase = get_supabase_client()
+    email_clean = req.email.strip().lower()
+
+    # 1. Kiểm tra xem Email có tồn tại trong bảng profiles không
+    try:
+        existing = supabase.table("profiles").select("*").eq("email", email_clean).execute()
+        if not existing.data or len(existing.data) == 0:
+            raise HTTPException(status_code=404, detail="Email này chưa được đăng ký trong hệ thống!")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi kiểm tra cơ sở dữ liệu: {str(e)}")
+
+    # 2. Tạo mã xác thực ngẫu nhiên 6 chữ số
+    code = f"{random.randint(100000, 999999)}"
+    reset_codes[email_clean] = {
+        "code": code,
+        "expires_at": time.time() + 600 # Hết hạn sau 10 phút
+    }
+
+    # 3. Mô phỏng gửi email bằng cách in ra console
+    print("\n" + "="*50)
+    print(f"   [SHOFY AUTH] MÃ KHÔI PHỤC MẬT KHẨU")
+    print(f"   Email: {email_clean}")
+    print(f"   Mã xác thực: {code}")
+    print("="*50 + "\n")
+
+    return {
+        "success": True,
+        "message": "Mã xác thực đã được gửi! Vui lòng kiểm tra email của bạn.",
+        "dev_code": code # Trả về code để tiện phát triển/test offline
+    }
+
+@router.post("/reset-password")
+def reset_password(req: ResetPasswordRequest):
+    """
+    Xác nhận mã và cập nhật mật khẩu mới cho tài khoản
+    """
+    supabase = get_supabase_client()
+    email_clean = req.email.strip().lower()
+    
+    # 1. Kiểm tra xem mã xác thực có hợp lệ không
+    if email_clean not in reset_codes:
+        raise HTTPException(status_code=400, detail="Yêu cầu khôi phục mật khẩu không tồn tại hoặc đã hết hạn!")
+
+    record = reset_codes[email_clean]
+    if time.time() > record["expires_at"]:
+        del reset_codes[email_clean]
+        raise HTTPException(status_code=400, detail="Mã xác thực đã hết hạn!")
+
+    if record["code"] != req.code.strip():
+        raise HTTPException(status_code=400, detail="Mã xác thực không chính xác!")
+
+    # 2. Cập nhật mật khẩu mới
+    hashed_pwd = hash_password(req.new_password)
+    try:
+        # Cập nhật trong bảng profiles
+        update_res = supabase.table("profiles").update({"password_hash": hashed_pwd}).eq("email", email_clean).execute()
+        if not update_res.data:
+            raise HTTPException(status_code=400, detail="Không thể cập nhật mật khẩu mới.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi cập nhật mật khẩu mới trên Supabase: {str(e)}")
+
+    # 3. Xoá mã xác thực đã dùng
+    del reset_codes[email_clean]
+
+    return {
+        "success": True,
+        "message": "Khôi phục mật khẩu thành công! Bạn có thể đăng nhập bằng mật khẩu mới."
+    }

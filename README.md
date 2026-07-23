@@ -21,98 +21,61 @@ Dự án bao gồm hai phần chính:
 
 ---
 
-## 🚀 Hướng dẫn cài đặt & Khởi chạy nhanh
+## 👥 Hướng dẫn thiết lập dành cho thành viên trong nhóm (Collaborators)
 
-### Bước 1: Clone dự án
+Dành cho các thành viên khác trong nhóm 4 người khi kéo dự án về máy chạy dùng chung:
+
+### Bước 1: Chấp nhận lời mời
+1. Kiểm tra email cá nhân (hoặc thông báo trên trang GitHub) để bấm **Chấp nhận lời mời (Accept Invitation)** vào repository.
+2. Kiểm tra email để bấm **Chấp nhận lời mời** tham gia tổ chức Supabase (sau khi được trưởng nhóm mời).
+
+### Bước 2: Tải code về máy (Clone)
+Mở terminal/git bash trên máy của bạn và chạy lệnh:
 ```bash
 git clone https://github.com/Dekisugi-2112/Shofy-clothing-commerce-website.git
 cd Shofy-clothing-commerce-website
 ```
 
-### Bước 2: Cài đặt và cấu hình Backend (FastAPI)
+### Bước 3: Cấu hình File môi trường (Vì các file này được bảo mật và không đưa lên Github)
+1. **Tại thư mục `backend/`:**
+   - Sao chép file `.env.example` thành file `.env`.
+   - Vào dự án chung trên trang [Supabase Dashboard](https://supabase.com/dashboard) -> Chọn dự án -> Vào **Project Settings** -> **API** để lấy khóa dán vào file `.env`:
+     - `SUPABASE_URL`
+     - `SUPABASE_ANON_KEY`
+     - `SUPABASE_SERVICE_ROLE_KEY`
+     - `GEMINI_API_KEY` (nếu có)
+2. **Tại thư mục `frontend/`:**
+   - Sao chép file `.env.local.example` thành file `.env.local`.
+   - Điền thông tin kết nối giống như trên.
 
-1. Di chuyển vào thư mục backend:
-   ```bash
-   cd backend
-   ```
-
-2. Tạo và kích hoạt môi trường ảo Python:
-   - **Windows (PowerShell):**
-     ```powershell
-     python -m venv .venv
-     .venv\Scripts\Activate.ps1
-     ```
-   - **macOS/Linux:**
-     ```bash
-     python3 -m venv .venv
-     source .venv/bin/activate
-     ```
-
-3. Cài đặt các gói thư viện cần thiết:
+### Bước 4: Khởi chạy Backend (FastAPI)
+1. Mở terminal tại thư mục `backend/`.
+2. Tạo và kích hoạt môi trường ảo:
+   - *Windows:* `python -m venv .venv` sau đó chạy `.venv\Scripts\Activate.ps1`
+   - *macOS/Linux:* `python3 -m venv .venv` sau đó chạy `source .venv/bin/activate`
+3. Cài đặt các thư viện:
    ```bash
    pip install -r requirements.txt
    ```
-
-4. Cấu hình file môi trường:
-   - Sao chép file mẫu `.env.example` thành `.env`:
-     ```bash
-     copy .env.example .env     # Windows CMD
-     # hoặc
-     cp .env.example .env       # macOS/Linux/Git Bash
-     ```
-   - Mở file `.env` mới tạo và cập nhật các thông tin kết nối Supabase của nhóm bạn:
-     - `SUPABASE_URL`
-     - `SUPABASE_KEY`
-     - `SUPABASE_SERVICE_ROLE_KEY`
-     - `GEMINI_API_KEY` (Sử dụng để chạy tính năng AI Stylist, nếu không có hệ thống sẽ tự động chạy chế độ dự phòng rule-based).
-
-5. Khởi chạy Backend API Server:
+4. Chạy server:
    ```bash
    python -m uvicorn app.main:app --reload
    ```
-   API Server sẽ chạy tại địa chỉ: `http://127.0.0.1:8000`
+   *(Backend sẽ chạy tại cổng `http://127.0.0.1:8000`)*
 
----
-
-### Bước 3: Khởi tạo dữ liệu (Seeding Database - Tùy chọn)
-
-Nếu bạn muốn tạo lại dữ liệu mẫu cho cơ sở dữ liệu Supabase mới:
-1. Đảm bảo đã kích hoạt môi trường ảo Python và đang ở trong thư mục `backend`.
-2. Tạo cấu trúc bảng bằng cách chạy các file SQL trong thư mục `backend/database_sql/` theo thứ tự từ `01` đến `09` trên giao diện **SQL Editor** của Supabase.
-3. Chạy file python để đổ dữ liệu mẫu:
-   ```bash
-   python seed_datasets.py   # Tạo danh mục và sản phẩm mẫu
-   python seed_reviews.py    # Tạo đánh giá sản phẩm mẫu cho AI
-   ```
-
----
-
-### Bước 4: Cài đặt và cấu hình Frontend (Next.js)
-
-1. Mở một cửa sổ terminal mới và di chuyển vào thư mục frontend:
-   ```bash
-   cd frontend
-   ```
-
-2. Cài đặt các gói thư viện Node.js:
+### Bước 5: Khởi chạy Frontend (Next.js)
+1. Mở terminal thứ 2 tại thư mục `frontend/`.
+2. Cài đặt các gói thư viện:
    ```bash
    npm install
    ```
-
-3. Cấu hình file môi trường:
-   - Sao chép file `.env.local.example` thành `.env.local`:
-     ```bash
-     copy .env.local.example .env.local     # Windows CMD
-     # hoặc
-     cp .env.local.example .env.local       # macOS/Linux/Git Bash
-     ```
-   - Mở file `.env.local` mới tạo và điền địa chỉ Backend cùng khóa Supabase của bạn.
-
-4. Khởi chạy dự án ở chế độ phát triển (Development):
+3. Chạy client:
    ```bash
    npm run dev
    ```
-   Ứng dụng sẽ chạy tại địa chỉ: `http://localhost:3000`
+   *(Frontend sẽ chạy tại cổng `http://localhost:3000`)*
+
+> 💡 **Lưu ý cực kỳ quan trọng:** Vì dự án đã dùng chung Database và Storage trực tuyến trên Supabase, các thành viên **không cần chạy lệnh tạo lại bảng hoặc seed dữ liệu** (`seed_datasets.py` hay `seed_reviews.py`). Hệ thống đã có đầy đủ sản phẩm, ảnh và đánh giá mẫu sẵn sàng sử dụng.
 
 ---
 

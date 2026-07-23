@@ -30,3 +30,11 @@ class ProfileUpdateRequest(BaseModel):
     full_name: str
     phone: Optional[str] = None
     avatar_url: Optional[str] = None
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    code: str
+    new_password: str = Field(..., min_length=6, description="Mật khẩu mới tối thiểu 6 ký tự")
